@@ -11,7 +11,7 @@ from watchdog.events import (
     FileSystemEventHandler,
     RegexMatchingEventHandler,
 )
-from watchdog.observers.api import DEFAULT_OBSERVER_TIMEOUT, BaseObserver, ObservedWatch, EventEmitter
+from watchdog.observers.api import DEFAULT_OBSERVER_TIMEOUT, BaseObserver, EventEmitter, ObservedWatch
 
 
 @dataclass
