@@ -382,8 +382,10 @@ class SingletonFileObserver(metaclass=Singleton):
             patterns=["*"], ignore_patterns=[], ignore_directories=False
         )
 
-        self._code_modification_handler.on_modified = self.on_change
-        self._code_deletion_handler.on_deleted = self.on_change
+        # https://github.com/python/mypy/issues/2427 -- use setattr() or type: ignore
+        self._code_modification_handler.on_modified = self.on_change  # type: ignore
+        self._code_deletion_handler.on_deleted = self.on_change  # type: ignore
+
         self._watch_lock = threading.Lock()
         self._lock: Lock = threading.Lock()
 

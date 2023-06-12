@@ -25,7 +25,7 @@ class TestStaticFolderWrapper(TestCase):
         self.observer = MagicMock()
         self.path_handler = MagicMock()
         self.initial_watch = MagicMock()
-        self.wrapper = StaticFolderWrapper(self.observer, self.initial_watch, self.path_handler)
+        self.wrapper = StaticFolderWrapper(self.observer, self.path_handler, self.initial_watch)
 
     def test_on_parent_change_on_delete(self):
         watch_mock = MagicMock()
@@ -103,7 +103,7 @@ class TestHandlerObserver(TestCase):
 
         schedule_mock = MagicMock()
         schedule_mock.return_value = watch
-        self.observer.schedule = schedule_mock
+        self.observer.schedule = schedule_mock  # type: ignore
 
         result = self.observer.schedule_handler(bundle)
 
@@ -131,7 +131,7 @@ class TestHandlerObserver(TestCase):
 
         schedule_mock = MagicMock()
         schedule_mock.side_effect = [watch, parent_watch]
-        self.observer.schedule = schedule_mock
+        self.observer.schedule = schedule_mock  # type: ignore
 
         wrapper = MagicMock()
         wrapper_mock.return_value = wrapper
@@ -142,4 +142,4 @@ class TestHandlerObserver(TestCase):
         self.assertEqual(result, parent_watch)
         schedule_mock.assert_any_call(bundle.event_handler, "dir", True)
         schedule_mock.assert_any_call(parent_bundle.event_handler, "parent", False)
-        wrapper_mock.assert_called_once_with(self.observer, watch, bundle)
+        wrapper_mock.assert_called_once_with(self.observer, bundle, watch)

@@ -11,8 +11,7 @@ from watchdog.events import (
     FileSystemEventHandler,
     RegexMatchingEventHandler,
 )
-from watchdog.observers import Observer
-from watchdog.observers.api import DEFAULT_OBSERVER_TIMEOUT, ObservedWatch
+from watchdog.observers.api import DEFAULT_OBSERVER_TIMEOUT, BaseObserver, ObservedWatch, EventEmitter
 
 
 @dataclass
@@ -61,7 +60,7 @@ class StaticFolderWrapper:
     the watch will be stopped and changes in the renamed folder will not be triggered.
     """
 
-    def __init__(self, observer: "HandlerObserver", initial_watch: ObservedWatch, path_handler: PathHandler):
+    def __init__(self, observer: "HandlerObserver", path_handler: PathHandler, initial_watch: Optional[ObservedWatch]):
         """[summary]
 
         Parameters
@@ -108,17 +107,19 @@ class StaticFolderWrapper:
             ignore_directories=False,
             case_sensitive=True,
         )
-        parent_folder_handler.on_any_event = self._on_parent_change
+
+        # https://github.com/python/mypy/issues/2427 -- use setattr() or type: ignore
+        parent_folder_handler.on_any_event = self._on_parent_change  # type: ignore
         return PathHandler(path=parent_dir_path, event_handler=parent_folder_handler)
 
 
-class HandlerObserver(Observer):  # pylint: disable=too-many-ancestors
+class HandlerObserver(BaseObserver):  # pylint: disable=too-many-ancestors
     """
     Extended WatchDog Observer that takes in a single PathHandler object.
     """
 
     def __init__(self, timeout=DEFAULT_OBSERVER_TIMEOUT):
-        super().__init__(timeout=timeout)
+        super().__init__(emitter_class=EventEmitter, timeout=timeout)
 
     def schedule_handlers(self, path_handlers: List[PathHandler]) -> List[ObservedWatch]:
         """Schedule a list of PathHandlers
@@ -154,7 +155,9 @@ class HandlerObserver(Observer):  # pylint: disable=too-many-ancestors
         """
         watch = self.schedule(path_handler.event_handler, str(path_handler.path), path_handler.recursive)
         if path_handler.static_folder:
-            static_wrapper = StaticFolderWrapper(self, watch, path_handler)
+            static_wrapper = StaticFolderWrapper(self, path_handler, watch)
             parent_path_handler = static_wrapper.get_dir_parent_path_handler()
             watch = self.schedule_handler(parent_path_handler)
-        return watch
+
+        # lucashuy: mypy appears to think that this is returning a variable with type "Any"
+        return watch  # type: ignore
